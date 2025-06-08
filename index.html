@@ -71,6 +71,7 @@
         .api-setup-content {
             transition: all 0.3s ease;
             overflow: hidden;
+            margin-top: 15px;
         }
         
         .api-setup.collapsed .api-setup-content {
@@ -209,6 +210,14 @@
             opacity: 1;
         }
         
+        th.not-sortable {
+            cursor: default;
+        }
+        
+        th.not-sortable:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
         td {
             padding: 15px 12px;
             border-bottom: 1px solid #eee;
@@ -300,6 +309,7 @@
             font-size: 12px;
             transition: all 0.3s ease;
             min-width: 70px;
+            margin-right: 5px;
         }
         
         .refresh-btn:hover {
@@ -419,7 +429,7 @@
         }
         
         .actions-cell {
-            width: 100px;
+            width: 120px;
             text-align: center;
         }
         
@@ -468,10 +478,10 @@
                             <th class="number-cell sortable" onclick="sortTable(0, 'number')">#</th>
                             <th class="name-cell sortable" onclick="sortTable(1, 'text')">Accessory Name</th>
                             <th class="price-cell sortable" onclick="sortTable(2, 'price')">Price</th>
-                            <th class="link-cell">Buy Link</th>
+                            <th class="link-cell not-sortable">Buy Link</th>
                             <th class="description-cell sortable" onclick="sortTable(4, 'text')">Use Description</th>
                             <th class="purchased-cell sortable" onclick="sortTable(5, 'text')">Purchased?</th>
-                            <th class="actions-cell">Actions</th>
+                            <th class="actions-cell not-sortable">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="tableBody">
@@ -544,6 +554,69 @@
                 // Keep expanded when not connected
                 apiSetup.classList.remove('collapsed');
             }
+        }
+
+        function sortTable(columnIndex, dataType) {
+            // Update sort direction
+            if (currentSort.column === columnIndex) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = columnIndex;
+                currentSort.direction = 'asc';
+                currentSort.type = dataType;
+            }
+
+            // Update header indicators
+            const headers = document.querySelectorAll('th.sortable');
+            headers.forEach((header) => {
+                header.classList.remove('sort-asc', 'sort-desc');
+            });
+
+            // Add sort indicator to the clicked column
+            const clickedHeader = document.querySelector(`th:nth-child(${columnIndex + 1})`);
+            if (clickedHeader && clickedHeader.classList.contains('sortable')) {
+                clickedHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+            }
+
+            // Sort the accessories array
+            accessories.sort((a, b) => {
+                let valueA, valueB;
+
+                switch (columnIndex) {
+                    case 0: // Number
+                        valueA = a.number;
+                        valueB = b.number;
+                        break;
+                    case 1: // Name
+                        valueA = a.name.toLowerCase();
+                        valueB = b.name.toLowerCase();
+                        break;
+                    case 2: // Price
+                        valueA = a.price;
+                        valueB = b.price;
+                        break;
+                    case 4: // Description
+                        valueA = a.description.toLowerCase();
+                        valueB = b.description.toLowerCase();
+                        break;
+                    case 5: // Purchased
+                        valueA = a.purchased.toLowerCase();
+                        valueB = b.purchased.toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (dataType === 'number' || dataType === 'price') {
+                    return currentSort.direction === 'asc' ? valueA - valueB : valueB - valueA;
+                } else {
+                    if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                }
+            });
+
+            renderTable();
         }
 
         async function refreshPrice(itemNumber) {
@@ -660,65 +733,7 @@
             }, 5000);
         }
 
-        function sortTable(columnIndex, dataType) {
-            // Update sort direction
-            if (currentSort.column === columnIndex) {
-                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
-            } else {
-                currentSort.column = columnIndex;
-                currentSort.direction = 'asc';
-                currentSort.type = dataType;
-            }
-
-            // Update header indicators
-            const headers = document.querySelectorAll('th.sortable');
-            headers.forEach((header, index) => {
-                header.classList.remove('sort-asc', 'sort-desc');
-                if (index === columnIndex || (columnIndex === 0 && index === 0) || (columnIndex === 1 && index === 1) || (columnIndex === 2 && index === 2) || (columnIndex === 4 && index === 4) || (columnIndex === 5 && index === 5)) {
-                    header.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
-                }
-            });
-
-            // Sort the accessories array
-            accessories.sort((a, b) => {
-                let valueA, valueB;
-
-                switch (columnIndex) {
-                    case 0: // Number
-                        valueA = a.number;
-                        valueB = b.number;
-                        break;
-                    case 1: // Name
-                        valueA = a.name.toLowerCase();
-                        valueB = b.name.toLowerCase();
-                        break;
-                    case 2: // Price
-                        valueA = a.price;
-                        valueB = b.price;
-                        break;
-                    case 4: // Description
-                        valueA = a.description.toLowerCase();
-                        valueB = b.description.toLowerCase();
-                        break;
-                    case 5: // Purchased
-                        valueA = a.purchased.toLowerCase();
-                        valueB = b.purchased.toLowerCase();
-                        break;
-                    default:
-                        return 0;
-                }
-
-                if (dataType === 'number' || dataType === 'price') {
-                    return currentSort.direction === 'asc' ? valueA - valueB : valueB - valueA;
-                } else {
-                    if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
-                    if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
-                    return 0;
-                }
-            });
-
-            renderTable();
-        }
+        function renderTable() {
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
