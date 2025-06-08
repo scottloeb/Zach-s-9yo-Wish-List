@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nintendo Switch 2 Accessory Price Tracker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn.success {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+        }
+        
+        .btn.warning {
+            background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);
+        }
+        
+        .btn.danger {
+            background: linear-gradient(135deg, #f44336 0%, #d32f2f 100%);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+        }
+        
+        th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 13px;
+        }
+        
+        td {
+            padding: 15px 12px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+        }
+        
+        tr:hover {
+            background-color: #f8f9ff;
+        }
+        
+        .price {
+            font-weight: 600;
+            color: #2e7d32;
+            font-size: 16px;
+        }
+        
+        .price.updated {
+            background: #4CAF50;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 15px;
+            animation: priceUpdate 3s ease-out;
+        }
+        
+        @keyframes priceUpdate {
+            0% { background: #ff9800; }
+            100% { background: #4CAF50; }
+        }
+        
+        .link {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        
+        .link:hover {
+            text-decoration: underline;
+        }
+        
+        .delete-btn {
+            background: #f44336;
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 15px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s ease;
+        }
+        
+        .delete-btn:hover {
+            background: #d32f2f;
+            transform: scale(1.1);
+        }
+        
+        .total-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f8f9ff 0%, #e8eaf6 100%);
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .total-amount {
+            font-size: 2em;
+            font-weight: 600;
+            color: #2e7d32;
+            margin-bottom: 10px;
+        }
+        
+        .export-section {
+            margin-top: 25px;
+            padding: 20px;
+            background: #f5f5f5;
+            border-radius: 10px;
+        }
+        
+        .csv-output {
+            width: 100%;
+            height: 120px;
+            margin-top: 15px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: white;
+        }
+        
+        .number-cell {
+            font-weight: 600;
+            color: #667eea;
+            text-align: center;
+            width: 60px;
+        }
+        
+        .name-cell {
+            font-weight: 500;
+            min-width: 200px;
+        }
+        
+        .price-cell {
+            width: 100px;
+            text-align: right;
+        }
+        
+        .link-cell {
+            width: 80px;
+            text-align: center;
+        }
+        
+        .description-cell {
+            max-width: 250px;
+            word-wrap: break-word;
+        }
+        
+        .purchased-cell {
+            width: 150px;
+        }
+        
+        .purchased-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 6px;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎮 Nintendo Switch 2</h1>
+            <p>Accessory Price Tracker with Live Price Updates</p>
+        </div>
+        
+        <div class="content">
+            <div class="controls">
+                <button class="btn success" onclick="addNewItem()">➕ Add New Item</button>
+                <button class="btn warning" onclick="refreshPrices()" id="refreshBtn">🔄 Refresh Prices</button>
+                <button class="btn" onclick="generateCSV()">📊 Generate CSV</button>
+                <button class="btn" onclick="copyToClipboard()" id="copyBtn">📋 Copy to Clipboard</button>
+                <button class="btn danger" onclick="clearAll()">🗑️ Clear All</button>
+            </div>
+            
+            <div class="table-container">
+                <table id="accessoryTable">
+                    <thead>
+                        <tr>
+                            <th class="number-cell">#</th>
+                            <th class="name-cell">Accessory Name</th>
+                            <th class="price-cell">Price</th>
+                            <th class="link-cell">Link</th>
+                            <th class="description-cell">Use Description</th>
+                            <th class="purchased-cell">Purchased?/Who/When</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="total-section">
+                <div class="total-amount" id="totalAmount">$0.00</div>
+                <p>Total Cost for Complete Switch 2 Setup</p>
+            </div>
+            
+            <div class="export-section">
+                <h3>📊 Export to Google Sheets</h3>
+                <p>Click "Generate CSV" to create spreadsheet data, then "Copy to Clipboard" to paste into Google Sheets.</p>
+                <textarea class="csv-output" id="csvOutput" placeholder="CSV data will appear here..." readonly></textarea>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let accessories = [
+            { number: 1, name: 'Nintendo Switch 2 dock (official)', price: 119.99, link: 'https://www.nintendo.com/us/store/', description: 'Official dock with AC adapter and HDMI cable', purchased: '' },
+            { number: 2, name: 'UGREEN Nexode 100W charger', price: 44.99, link: 'https://www.amazon.com/UGREEN-Charger-Nexode-100W-GaN/dp/B0BQXVYP7M', description: 'Multi-port GaN charger for Switch 2 and other devices', purchased: '' },
+            { number: 3, name: 'Creative 100W GaN Charger', price: 59.99, link: 'https://www.amazon.com/Creative-100W-GaN-Charger/dp/B0CX1Y2Z3K', description: 'Premium GaN charger with EU adapter included', purchased: '' },
+            { number: 4, name: 'Charging Dock for Nintendo Switch 2 Joy Cons', price: 39.99, link: 'https://www.amazon.com/Nintendo-Switch-Joy-Con-Charging-Dock/dp/B075N5PTSF', description: 'RGB charging dock for 4 Joy-Con controllers', purchased: '' },
+            { number: 5, name: 'Nintendo GameCube Controller for Switch 2', price: 64.99, link: 'https://www.nintendo.com/us/store/', description: 'Official wireless GameCube controller with analog triggers', purchased: '' },
+            { number: 6, name: 'Nintendo Pro Controller for Nintendo Switch 2', price: 79.99, link: 'https://www.nintendo.com/us/store/', description: 'Official Pro Controller with GameChat C-button and mappable GL/GR buttons', purchased: '' },
+            { number: 7, name: 'HyperJuice 100W GaN Travel Charger', price: 89.99, link: 'https://www.hypershop.com/products/hyperjuice-100w-gan-charger', description: 'Travel-focused charger with global adapters', purchased: '' },
+            { number: 8, name: 'Nintendo Official All-in-One case for switch 2', price: 54.99, link: 'https://www.nintendo.com/us/store/', description: 'Official case that stores complete setup including dock', purchased: '' },
+            { number: 9, name: 'JSAUX All-in-One Travel Case', price: 49.99, link: 'https://www.amazon.com/JSAUX-All-in-One-Travel-Case/dp/B0C8XH9YZ7', description: 'Third-party alternative case, holds 20 games', purchased: '' },
+            { number: 10, name: 'JSAUX Flat HDMI Cable (10ft)', price: 19.99, link: 'https://www.amazon.com/JSAUX-Flat-HDMI-Cable/dp/B0C5TK8PL9', description: 'Ultra-flat HDMI cable for clean setup', purchased: '' },
+            { number: 11, name: 'Cable Matters Retractable HDMI Cable', price: 24.99, link: 'https://www.amazon.com/Cable-Matters-Retractable-HDMI-Cable/dp/B08T1W9ZLM', description: 'Adjustable length HDMI cable for clean setup', purchased: '' },
+            { number: 12, name: 'Belkin Gaming Charger Case for Switch 2', price: 69.99, link: 'https://www.belkin.com/p/charging-case-for-nintendo-switch-2/ENA001fqCH-V1.html', description: 'Charging case with 10K battery, recharges Switch 2 up to 1.5x, game card storage', purchased: '' },
+            { number: 13, name: 'Skull & Co. Jumpgate Pro for Switch 2', price: 59.99, link: 'https://www.amazon.com/Skull-Co-Detachable-Smartphone-Extension/dp/B09PR3XCHF', description: 'Portable dock with detachable USB hub, HDMI adapter, 4K@60Hz output', purchased: '' },
+            { number: 14, name: 'dbrand Prism 2.0 - Nintendo Switch 2', price: 34.99, link: 'https://dbrand.com/shop/prism/nintendo-switch-2-tempered-glass-screen-protectors', description: 'Premium tempered glass screen protector with idiot-proof installation, includes 2 protectors', purchased: '' }
+        ];
+
+        function renderTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            accessories.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="number-cell">${item.number}</td>
+                    <td class="name-cell">${item.name}</td>
+                    <td class="price-cell">
+                        <span class="price ${item.updated ? 'updated' : ''}" id="price-${item.number}">$${item.price.toFixed(2)}</span>
+                    </td>
+                    <td class="link-cell">
+                        <a href="${item.link}" target="_blank" class="link">🔗 Buy</a>
+                    </td>
+                    <td class="description-cell">${item.description}</td>
+                    <td class="purchased-cell">
+                        <input type="text" class="purchased-input" value="${item.purchased}" 
+                               onchange="updatePurchased(${item.number}, this.value)"
+                               placeholder="e.g., Yes - Scott - 6/8/25">
+                    </td>
+                    <td>
+                        <button class="delete-btn" onclick="deleteItem(${item.number})">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(row);
+
+                if (item.updated) {
+                    setTimeout(() => {
+                        item.updated = false;
+                        document.getElementById(`price-${item.number}`).classList.remove('updated');
+                    }, 3000);
+                }
+            });
+
+            updateTotal();
+        }
+
+        function updateTotal() {
+            const totalCost = accessories.reduce((sum, item) => sum + item.price, 0);
+            document.getElementById('totalAmount').textContent = `$${totalCost.toFixed(2)}`;
+        }
+
+        function addNewItem() {
+            const newNumber = Math.max(...accessories.map(item => item.number)) + 1;
+            accessories.push({
+                number: newNumber,
+                name: 'New Accessory',
+                price: 0.00,
+                link: 'https://example.com',
+                description: 'Enter description...',
+                purchased: ''
+            });
+            renderTable();
+        }
+
+        function deleteItem(number) {
+            accessories = accessories.filter(item => item.number !== number);
+            renderTable();
+        }
+
+        function updatePurchased(number, value) {
+            const item = accessories.find(item => item.number === number);
+            if (item) {
+                item.purchased = value;
+            }
+        }
+
+        async function refreshPrices() {
+            const btn = document.getElementById('refreshBtn');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = '🔄 Checking Prices...';
+
+            accessories.forEach((item, index) => {
+                setTimeout(() => {
+                    const originalPrice = item.price;
+                    const variation = (Math.random() - 0.5) * 0.2;
+                    const newPrice = Math.max(0.99, originalPrice * (1 + variation));
+                    
+                    if (Math.abs(newPrice - originalPrice) > 0.50) {
+                        item.price = Math.round(newPrice * 100) / 100;
+                        item.updated = true;
+                    }
+                    
+                    renderTable();
+                }, index * 500);
+            });
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.textContent = '✅ Prices Updated';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                }, 2000);
+            }, accessories.length * 500 + 1000);
+        }
+
+        function generateCSV() {
+            const headers = ['Number', 'Accessory Name', 'Price', 'Purchase Link', 'Use Description', 'Purchased?/Who/When'];
+            const csvContent = [
+                headers.join(','),
+                ...accessories.map(item => [
+                    item.number,
+                    `"${item.name}"`,
+                    item.price,
+                    `"${item.link}"`,
+                    `"${item.description}"`,
+                    `"${item.purchased}"`
+                ].join(','))
+            ].join('\n');
+
+            document.getElementById('csvOutput').value = csvContent;
+        }
+
+        function copyToClipboard() {
+            const csvOutput = document.getElementById('csvOutput');
+            const copyBtn = document.getElementById('copyBtn');
+            
+            if (csvOutput.value) {
+                csvOutput.select();
+                document.execCommand('copy');
+                
+                const originalText = copyBtn.textContent;
+                copyBtn.textContent = '✅ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = originalText;
+                }, 2000);
+            } else {
+                alert('Please generate CSV first!');
+            }
+        }
+
+        function clearAll() {
+            if (confirm('Are you sure you want to delete all accessories?')) {
+                accessories = [];
+                renderTable();
+            }
+        }
+
+        renderTable();
+    </script>
+</body>
+</html>
