@@ -48,6 +48,46 @@
             padding: 20px;
             margin: 20px;
             text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .api-setup.collapsed {
+            padding: 10px 20px;
+            cursor: pointer;
+        }
+        
+        .api-setup.collapsed:hover {
+            background: #e8eaf6;
+            border-color: #5c6bc0;
+        }
+        
+        .api-setup-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        
+        .api-setup-content {
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .api-setup.collapsed .api-setup-content {
+            max-height: 0;
+            opacity: 0;
+            margin: 0;
+            padding: 0;
+        }
+        
+        .collapse-indicator {
+            font-size: 1.2em;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+        
+        .api-setup.collapsed .collapse-indicator {
+            transform: rotate(-90deg);
         }
         
         .api-input {
@@ -141,6 +181,32 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
             font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.3s ease;
+            position: relative;
+        }
+        
+        th:hover {
+            background: linear-gradient(135deg, #5c6bc0 0%, #673ab7 100%);
+        }
+        
+        th.sortable::after {
+            content: ' ↕️';
+            font-size: 12px;
+            opacity: 0.6;
+        }
+        
+        th.sort-asc::after {
+            content: ' ↑';
+            color: #ffeb3b;
+            opacity: 1;
+        }
+        
+        th.sort-desc::after {
+            content: ' ↓';
+            color: #ffeb3b;
+            opacity: 1;
         }
         
         td {
@@ -371,15 +437,20 @@
             <p>Accessory Price Tracker with Live Price Updates</p>
         </div>
         
-        <div class="api-setup">
-            <h3>🔑 SerpAPI Configuration</h3>
-            <p>Enter your free SerpAPI key to enable real price checking (100 searches/month free)</p>
-            <input type="password" id="apiKeyInput" class="api-input" placeholder="Enter your SerpAPI key here">
-            <button class="btn" onclick="saveApiKey()">Save Key</button>
-            <div id="apiStatus" class="api-status">No API key configured</div>
-            <p style="font-size: 12px; margin-top: 10px;">
-                Get your free key at <a href="https://serpapi.com/" target="_blank">serpapi.com</a>
-            </p>
+        <div class="api-setup" id="apiSetup">
+            <div class="api-setup-header" onclick="toggleApiSetup()">
+                <h3>🔑 SerpAPI Configuration</h3>
+                <span class="collapse-indicator">▼</span>
+            </div>
+            <div class="api-setup-content">
+                <p>Enter your free SerpAPI key to enable real price checking (100 searches/month free)</p>
+                <input type="password" id="apiKeyInput" class="api-input" placeholder="Enter your SerpAPI key here">
+                <button class="btn" onclick="saveApiKey()">Save Key</button>
+                <div id="apiStatus" class="api-status">No API key configured</div>
+                <p style="font-size: 12px; margin-top: 10px;">
+                    Get your free key at <a href="https://serpapi.com/" target="_blank">serpapi.com</a>
+                </p>
+            </div>
         </div>
         
         <div class="content">
@@ -394,12 +465,12 @@
                 <table id="accessoryTable">
                     <thead>
                         <tr>
-                            <th class="number-cell">#</th>
-                            <th class="name-cell">Accessory Name</th>
-                            <th class="price-cell">Price</th>
+                            <th class="number-cell sortable" onclick="sortTable(0, 'number')">#</th>
+                            <th class="name-cell sortable" onclick="sortTable(1, 'text')">Accessory Name</th>
+                            <th class="price-cell sortable" onclick="sortTable(2, 'price')">Price</th>
                             <th class="link-cell">Buy Link</th>
-                            <th class="description-cell">Use Description</th>
-                            <th class="purchased-cell">Purchased?</th>
+                            <th class="description-cell sortable" onclick="sortTable(4, 'text')">Use Description</th>
+                            <th class="purchased-cell sortable" onclick="sortTable(5, 'text')">Purchased?</th>
                             <th class="actions-cell">Actions</th>
                         </tr>
                     </thead>
@@ -441,6 +512,12 @@
         ];
 
         let serpApiKey = localStorage.getItem('serpApiKey') || 'b5602d13cc1e96f2dd19917aaf9ab50797042d3c93dabb8de862eee5daad1ff7';
+        let currentSort = { column: 0, direction: 'asc', type: 'number' };
+
+        function toggleApiSetup() {
+            const apiSetup = document.getElementById('apiSetup');
+            apiSetup.classList.toggle('collapsed');
+        }
 
         function saveApiKey() {
             const apiKey = document.getElementById('apiKeyInput').value.trim();
@@ -454,12 +531,18 @@
 
         function updateApiStatus(connected) {
             const statusEl = document.getElementById('apiStatus');
+            const apiSetup = document.getElementById('apiSetup');
+            
             if (connected && serpApiKey) {
                 statusEl.textContent = '✅ API Connected - Real price checking enabled!';
                 statusEl.className = 'api-status connected';
+                // Auto-collapse the API setup when connected
+                apiSetup.classList.add('collapsed');
             } else {
                 statusEl.textContent = '❌ No API key - using sample data';
                 statusEl.className = 'api-status error';
+                // Keep expanded when not connected
+                apiSetup.classList.remove('collapsed');
             }
         }
 
@@ -577,7 +660,65 @@
             }, 5000);
         }
 
-        function renderTable() {
+        function sortTable(columnIndex, dataType) {
+            // Update sort direction
+            if (currentSort.column === columnIndex) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = columnIndex;
+                currentSort.direction = 'asc';
+                currentSort.type = dataType;
+            }
+
+            // Update header indicators
+            const headers = document.querySelectorAll('th.sortable');
+            headers.forEach((header, index) => {
+                header.classList.remove('sort-asc', 'sort-desc');
+                if (index === columnIndex || (columnIndex === 0 && index === 0) || (columnIndex === 1 && index === 1) || (columnIndex === 2 && index === 2) || (columnIndex === 4 && index === 4) || (columnIndex === 5 && index === 5)) {
+                    header.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+                }
+            });
+
+            // Sort the accessories array
+            accessories.sort((a, b) => {
+                let valueA, valueB;
+
+                switch (columnIndex) {
+                    case 0: // Number
+                        valueA = a.number;
+                        valueB = b.number;
+                        break;
+                    case 1: // Name
+                        valueA = a.name.toLowerCase();
+                        valueB = b.name.toLowerCase();
+                        break;
+                    case 2: // Price
+                        valueA = a.price;
+                        valueB = b.price;
+                        break;
+                    case 4: // Description
+                        valueA = a.description.toLowerCase();
+                        valueB = b.description.toLowerCase();
+                        break;
+                    case 5: // Purchased
+                        valueA = a.purchased.toLowerCase();
+                        valueB = b.purchased.toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+
+                if (dataType === 'number' || dataType === 'price') {
+                    return currentSort.direction === 'asc' ? valueA - valueB : valueB - valueA;
+                } else {
+                    if (valueA < valueB) return currentSort.direction === 'asc' ? -1 : 1;
+                    if (valueA > valueB) return currentSort.direction === 'asc' ? 1 : -1;
+                    return 0;
+                }
+            });
+
+            renderTable();
+        }
             const tbody = document.getElementById('tableBody');
             tbody.innerHTML = '';
 
